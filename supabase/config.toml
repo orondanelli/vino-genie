@@ -1,0 +1,10 @@
+project_id = "bnkzmuyznockzzxghkis"
+
+[functions.analyze-wine-label]
+verify_jwt = false
+
+[functions.wine-pairing]
+verify_jwt = false
+
+[functions.wine-recommend]
+verify_jwt = false
