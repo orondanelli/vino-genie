@@ -1,7 +1,17 @@
 steps:
-  # Build the container image
+  # Build the container image with build args
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/vino-genie', '.']
+    args: 
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/vino-genie'
+      - '--build-arg'
+      - 'VITE_SUPABASE_PROJECT_ID=${_VITE_SUPABASE_PROJECT_ID}'
+      - '--build-arg'
+      - 'VITE_SUPABASE_PUBLISHABLE_KEY=${_VITE_SUPABASE_PUBLISHABLE_KEY}'
+      - '--build-arg'
+      - 'VITE_SUPABASE_URL=${_VITE_SUPABASE_URL}'
+      - '.'
   
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -27,3 +37,9 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
+# Substitution variables (configure these in Cloud Build Trigger)
+substitutions:
+  _VITE_SUPABASE_PROJECT_ID: 'bnkzmuyznockzzxghkis'
+  _VITE_SUPABASE_PUBLISHABLE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJua3ptdXl6bm9ja3p6eGdoa2lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MjQ5ODYsImV4cCI6MjA4MzQwMDk4Nn0.kGZA4uQwNYF_U7BaNrcRvMiRo55uvup2iwCu2pggegQ'
+  _VITE_SUPABASE_URL: 'https://bnkzmuyznockzzxghkis.supabase.co'
