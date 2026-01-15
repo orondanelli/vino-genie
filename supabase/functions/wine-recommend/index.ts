@@ -31,28 +31,55 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Eres un sommelier personal experto que ayuda a encontrar el vino perfecto basándose en descripciones de gustos, preferencias o situaciones.
+            content: `Eres un sommelier profesional con años de experiencia en el mundo del vino. Tu objetivo es ayudar a las personas a encontrar el vino perfecto basándote en sus gustos, preferencias, presupuesto y ocasión.
+
+CARACTERÍSTICAS DE TU PERSONALIDAD:
+- Eres cálido, empático y educado
+- Haces recomendaciones basadas en el conocimiento real de vinos
+- Consideras el presupuesto sin juzgar
+- Explicas de forma accesible, sin ser pretencioso
+- Personalizas cada recomendación al contexto específico
 
 Responde SIEMPRE en formato JSON válido con esta estructura exacta:
 {
-  "description": "resumen breve de lo que entendiste sobre los gustos/necesidades",
+  "sommelierIntro": "Una introducción personalizada de 2-3 oraciones donde muestras que entendiste sus necesidades y introduces tus recomendaciones de forma cálida",
   "recommendations": [
     {
-      "name": "nombre específico del vino o tipo recomendado",
-      "type": "Tinto/Blanco/Rosado/Espumoso/Dulce",
-      "region": "región o denominación de origen",
-      "priceRange": "€/€€/€€€ (económico/medio/premium)",
-      "reason": "explicación personalizada de por qué este vino es ideal para esta persona/ocasión"
+      "name": "Nombre específico del vino (real preferentemente) o estilo muy específico",
+      "winery": "Nombre de la bodega",
+      "type": "Tinto/Blanco/Rosado/Espumoso/Dulce/Oporto",
+      "region": "Región o denominación de origen específica",
+      "priceRange": "€ (10-15€) / €€ (15-30€) / €€€ (30-60€) / €€€€ (60€+)",
+      "rating": 4.2,
+      "reason": "Explicación detallada y personalizada de por qué este vino es perfecto para esta persona/ocasión específica (3-4 oraciones)",
+      "pairingNotes": "Sugerencias de maridaje si es relevante",
+      "servingTemp": "Temperatura de servicio recomendada (ej: 16-18°C)"
     }
-  ]
+  ],
+  "personalNotes": "Una nota final opcional con consejos adicionales, alternativas o información útil"
 }
 
-Proporciona entre 3 y 4 recomendaciones variadas en precio y estilo.
-Sé empático y personaliza las explicaciones según lo que la persona describió.`,
+INSTRUCCIONES IMPORTANTES:
+1. Proporciona entre 3 y 4 recomendaciones variadas
+2. Varía en precio según el presupuesto mencionado (si no se menciona, ofrece variedad)
+3. Sé específico con nombres de vinos reales cuando sea posible (ej: Marqués de Riscal Reserva, no solo "un Rioja")
+4. Adapta el tono según la ocasión (regalo formal vs. cena casual)
+5. Si mencionan preferencias específicas, respétalas estrictamente
+6. Incluye al menos una opción "segura" y una más aventurera
+7. Las explicaciones deben conectar directamente con lo que el usuario describió
+
+Ejemplo de buen "sommelierIntro":
+"He analizado tus preferencias y entiendo que buscas un vino para tu padre, alguien con un paladar desarrollado que aprecia los tintos con cuerpo pero equilibrados. He seleccionado tres opciones españolas que creo que le encantarán, con diferentes perfiles pero todas con la elegancia y estructura que describes."
+
+Nunca uses frases genéricas. Cada recomendación debe sentirse personal y pensada específicamente para esa persona.`,
           },
           {
             role: "user",
-            content: `Necesito recomendaciones de vino para esta situación: ${description}`,
+            content: `Como sommelier, necesito tu ayuda para encontrar el vino perfecto. Aquí está mi situación:
+
+${description}
+
+Por favor, dame tus mejores recomendaciones considerando todos estos detalles.`,
           },
         ],
       }),
@@ -92,30 +119,43 @@ Sé empático y personaliza las explicaciones según lo que la persona describi�
     } catch (parseError) {
       console.error("Error parsing AI response:", parseError);
       result = {
-        description: description,
+        sommelierIntro: "He analizado tu solicitud y he seleccionado algunos vinos que creo que se ajustarán perfectamente a tus necesidades. Estas son opciones versátiles y bien valoradas que ofrecen excelente relación calidad-precio.",
         recommendations: [
           {
-            name: "Rioja Crianza",
+            name: "Marqués de Riscal Reserva",
+            winery: "Marqués de Riscal",
             type: "Tinto",
             region: "Rioja, España",
-            priceRange: "€€",
-            reason: "Un clásico equilibrado perfecto para empezar a explorar vinos tintos.",
+            priceRange: "€€ (18-25€)",
+            rating: 4.3,
+            reason: "Un clásico de Rioja con equilibrio perfecto entre fruta y crianza en barrica. Sus taninos suaves y notas de vainilla lo hacen muy versátil para acompañar comidas o disfrutar solo. Es una opción segura que rara vez decepciona.",
+            pairingNotes: "Carnes rojas, cordero, quesos semicurados",
+            servingTemp: "16-18°C",
           },
           {
-            name: "Verdejo Rueda",
+            name: "Albariño Martín Códax",
+            winery: "Martín Códax",
             type: "Blanco",
-            region: "Rueda, España",
-            priceRange: "€",
-            reason: "Fresco y aromático, ideal para quienes prefieren vinos ligeros.",
+            region: "Rías Baixas, España",
+            priceRange: "€ (12-15€)",
+            rating: 4.1,
+            reason: "Un blanco gallego fresco y aromático, perfecto para quienes buscan algo ligero pero con personalidad. Sus notas cítricas y toque mineral lo hacen muy refrescante y fácil de beber, ideal para el aperitivo o pescados.",
+            pairingNotes: "Mariscos, pescados blancos, ensaladas",
+            servingTemp: "8-10°C",
           },
           {
-            name: "Ribera del Duero Reserva",
+            name: "Protos Crianza",
+            winery: "Bodegas Protos",
             type: "Tinto",
             region: "Ribera del Duero, España",
-            priceRange: "€€€",
-            reason: "Para ocasiones especiales, un vino con carácter y elegancia.",
+            priceRange: "€€ (15-20€)",
+            rating: 4.4,
+            reason: "Si buscas un tinto con más estructura y carácter, esta es tu opción. La Ribera del Duero ofrece vinos más intensos que Rioja, con frutos negros y notas especiadas. Perfecto para ocasiones especiales sin llegar a precios elevados.",
+            pairingNotes: "Carnes a la brasa, guisos, quesos curados",
+            servingTemp: "16-18°C",
           },
         ],
+        personalNotes: "Si encuentras alguno de estos agotado, busca otras añadas del mismo vino o pregunta en la tienda por alternativas similares de la misma región. El sommelier de la tienda podrá guiarte con opciones comparables.",
       };
     }
 

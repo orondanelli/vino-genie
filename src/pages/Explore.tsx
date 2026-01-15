@@ -1,109 +1,85 @@
-import { useState } from "react";
-import { Search, Wine, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Wine, Filter, Loader2, Star } from "lucide-react";
+
+interface WineImageProps {
+  src: string;
+  alt: string;
+}
+
+const WineImage = ({ src, alt }: WineImageProps) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (!src || hasError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent">
+        <Wine className="h-8 w-8 text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={src} 
+      alt={alt}
+      className="w-full h-full object-cover"
+      onError={() => setHasError(true)}
+    />
+  );
+};
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Layout from "@/components/Layout";
+import { wineAPI, TransformedWineData } from "@/services/wineApi";
+import { useToast } from "@/hooks/use-toast";
 
-interface WineData {
-  id: number;
-  name: string;
-  winery: string;
-  region: string;
-  type: string;
-  year: number;
-  description: string;
-}
-
-const sampleWines: WineData[] = [
-  {
-    id: 1,
-    name: "Marqués de Riscal Reserva",
-    winery: "Marqués de Riscal",
-    region: "Rioja, España",
-    type: "Tinto",
-    year: 2018,
-    description: "Vino elegante con aromas de frutas rojas maduras, vainilla y especias. Taninos suaves y final largo.",
-  },
-  {
-    id: 2,
-    name: "Albariño Pazo de Señorans",
-    winery: "Pazo de Señorans",
-    region: "Rías Baixas, España",
-    type: "Blanco",
-    year: 2022,
-    description: "Fresco y aromático con notas de frutas blancas, cítricos y un toque mineral característico.",
-  },
-  {
-    id: 3,
-    name: "Protos Crianza",
-    winery: "Bodegas Protos",
-    region: "Ribera del Duero, España",
-    type: "Tinto",
-    year: 2019,
-    description: "Intenso y estructurado, con aromas de frutos negros, regaliz y notas tostadas de la barrica.",
-  },
-  {
-    id: 4,
-    name: "Cava Gramona Imperial",
-    winery: "Gramona",
-    region: "Penedès, España",
-    type: "Espumoso",
-    year: 2017,
-    description: "Elegante y cremoso, con burbujas finas y aromas de brioche, manzana y frutos secos.",
-  },
-  {
-    id: 5,
-    name: "Muga Rosado",
-    winery: "Bodegas Muga",
-    region: "Rioja, España",
-    type: "Rosado",
-    year: 2023,
-    description: "Delicado y frutal con notas de fresa, frambuesa y un final fresco y equilibrado.",
-  },
-  {
-    id: 6,
-    name: "Vega Sicilia Único",
-    winery: "Vega Sicilia",
-    region: "Ribera del Duero, España",
-    type: "Tinto",
-    year: 2013,
-    description: "Icónico vino español de guarda, complejo con capas de frutas, especias, cuero y minerales.",
-  },
-  {
-    id: 7,
-    name: "Terras Gauda",
-    winery: "Terras Gauda",
-    region: "Rías Baixas, España",
-    type: "Blanco",
-    year: 2022,
-    description: "Blend atlántico con Albariño, Caíño y Loureiro. Aromático con notas herbáceas y cítricas.",
-  },
-  {
-    id: 8,
-    name: "Torres Mas La Plana",
-    winery: "Torres",
-    region: "Penedès, España",
-    type: "Tinto",
-    year: 2017,
-    description: "Cabernet Sauvignon de alta expresión con aromas de cassis, cedro y notas mediterráneas.",
-  },
-];
-
-const wineTypes = ["Todos", "Tinto", "Blanco", "Rosado", "Espumoso"];
+const wineTypes = ["Todos", "Tinto", "Blanco", "Rosado", "Espumoso", "Dulce", "Oporto"];
 
 const Explore = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("Todos");
+  const [selectedCountry, setSelectedCountry] = useState("Todos");
+  const [wines, setWines] = useState<TransformedWineData[]>([]);
+  const [countries, setCountries] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  const filteredWines = sampleWines.filter((wine) => {
+  useEffect(() => {
+    loadWines();
+  }, []);
+
+  const loadWines = async () => {
+    setIsLoading(true);
+    try {
+      const data = await wineAPI.getAllWines();
+      setWines(data);
+      
+      const availableCountries = await wineAPI.getUniqueCountries();
+      setCountries(availableCountries);
+    } catch (error) {
+      console.error('Error loading wines:', error);
+      toast({
+        title: "Error al cargar vinos",
+        description: "No pudimos cargar el catálogo. Por favor, intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredWines = wines.filter((wine) => {
     const matchesSearch =
       wine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       wine.winery.toLowerCase().includes(searchTerm.toLowerCase()) ||
       wine.region.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === "Todos" || wine.type === selectedType;
-    return matchesSearch && matchesType;
+    
+    const wineCountry = wineAPI.extractCountryFromRegion(wine.region);
+    const matchesCountry = selectedCountry === "Todos" || wineCountry === selectedCountry;
+    
+    return matchesSearch && matchesType && matchesCountry;
   });
 
   const getTypeColor = (type: string) => {
@@ -116,6 +92,10 @@ const Explore = () => {
         return "bg-primary/10 text-primary";
       case "Espumoso":
         return "bg-muted text-muted-foreground";
+      case "Dulce":
+        return "bg-pink-500/10 text-pink-700 dark:text-pink-400";
+      case "Oporto":
+        return "bg-purple-500/10 text-purple-700 dark:text-purple-400";
       default:
         return "bg-muted text-muted-foreground";
     }
@@ -140,7 +120,7 @@ const Explore = () => {
           {/* Filters */}
           <Card className="mb-8">
             <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -150,10 +130,13 @@ const Explore = () => {
                     className="pl-10"
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm text-muted-foreground">Filtros:</span>
+                  </div>
                   <Select value={selectedType} onValueChange={setSelectedType}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-full sm:w-40">
                       <SelectValue placeholder="Tipo de vino" />
                     </SelectTrigger>
                     <SelectContent>
@@ -164,55 +147,94 @@ const Explore = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="País" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Todos">Todos los países</SelectItem>
+                      {countries.map((country) => (
+                        <SelectItem key={country} value={country}>
+                          {country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {(selectedType !== "Todos" || selectedCountry !== "Todos" || searchTerm) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSearchTerm("");
+                        setSelectedType("Todos");
+                        setSelectedCountry("Todos");
+                      }}
+                      className="text-xs"
+                    >
+                      Limpiar filtros
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Results count */}
-          <p className="text-sm text-muted-foreground mb-4">
-            {filteredWines.length} vino{filteredWines.length !== 1 ? "s" : ""} encontrado
-            {filteredWines.length !== 1 ? "s" : ""}
-          </p>
+          {!isLoading && (
+            <p className="text-sm text-muted-foreground mb-4">
+              {filteredWines.length} vino{filteredWines.length !== 1 ? "s" : ""} encontrado
+              {filteredWines.length !== 1 ? "s" : ""}
+            </p>
+          )}
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+              <p className="text-muted-foreground">Cargando catálogo de vinos...</p>
+            </div>
+          )}
 
           {/* Wine Grid */}
-          <div className="grid md:grid-cols-2 gap-4">
-            {filteredWines.map((wine) => (
-              <Card key={wine.id} className="hover:shadow-md transition-shadow border-border/50 group">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center shrink-0">
-                      <Wine className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg font-serif truncate group-hover:text-primary transition-colors">
-                        {wine.name}
-                      </CardTitle>
-                      <CardDescription className="text-sm">
-                        {wine.winery}
-                      </CardDescription>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <span className={`px-2 py-0.5 rounded text-xs ${getTypeColor(wine.type)}`}>
-                          {wine.type}
-                        </span>
-                        <span className="px-2 py-0.5 bg-muted text-muted-foreground rounded text-xs">
-                          {wine.year}
-                        </span>
-                        <span className="px-2 py-0.5 bg-accent/50 text-foreground rounded text-xs">
-                          {wine.region}
-                        </span>
+          {!isLoading && (
+            <div className="grid md:grid-cols-2 gap-4">
+              {filteredWines.map((wine, index) => (
+                <Card key={`${wine.type}-${wine.id}-${index}`} className="hover:shadow-md transition-shadow border-border/50 group overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-20 rounded-lg overflow-hidden shrink-0 bg-muted">
+                        <WineImage src={wine.image} alt={wine.name} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg font-serif truncate group-hover:text-primary transition-colors">
+                          {wine.name}
+                        </CardTitle>
+                        <CardDescription className="text-sm">
+                          {wine.winery}
+                        </CardDescription>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <span className={`px-2 py-0.5 rounded text-xs ${getTypeColor(wine.type)}`}>
+                            {wine.type}
+                          </span>
+                          {wine.rating > 0 && (
+                            <span className="px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded text-xs flex items-center gap-1">
+                              <Star className="h-3 w-3 fill-current" />
+                              {wine.rating.toFixed(1)}
+                            </span>
+                          )}
+                          <span className="px-2 py-0.5 bg-accent/50 text-foreground rounded text-xs truncate max-w-[150px]">
+                            {wine.region}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-muted-foreground text-sm line-clamp-2">{wine.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          )}
 
-          {filteredWines.length === 0 && (
+          {!isLoading && filteredWines.length === 0 && (
             <div className="text-center py-12">
               <Wine className="h-12 w-12 text-muted mx-auto mb-4" />
               <p className="text-muted-foreground">No se encontraron vinos con esos criterios.</p>
@@ -222,6 +244,7 @@ const Explore = () => {
                 onClick={() => {
                   setSearchTerm("");
                   setSelectedType("Todos");
+                  setSelectedCountry("Todos");
                 }}
               >
                 Limpiar filtros
