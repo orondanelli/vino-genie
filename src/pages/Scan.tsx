@@ -155,46 +155,63 @@ const Scan = () => {
               </Card>
 
               {wineInfo && (
-                <Card className="bg-card border-primary/20">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <Wine className="h-8 w-8 text-primary" />
-                      <div>
-                        <CardTitle className="text-2xl font-serif">{wineInfo.name}</CardTitle>
-                        <CardDescription className="text-base">
-                          {wineInfo.winery} • {wineInfo.region}
-                        </CardDescription>
+                <Card className="bg-card border-border overflow-hidden">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row gap-6">
+                      {/* Wine Bottle Image */}
+                      <div className="flex-shrink-0 w-full md:w-48">
+                        <div className="aspect-[3/4] bg-gradient-to-br from-muted/30 to-secondary/30 rounded-2xl flex items-center justify-center overflow-hidden">
+                          <img 
+                            src={`https://images.vivino.com/thumbs/placeholder_pb_x600.png`}
+                            alt={wineInfo.name}
+                            className="w-full h-full object-contain p-4"
+                            onError={(e) => {
+                              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"%3E%3Crect fill="%23701010" width="100" height="200"/%3E%3Ctext x="50" y="100" text-anchor="middle" fill="white" font-size="60"%3E🍷%3C/text%3E%3C/svg%3E';
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-accent/50 rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground mb-1">Añada</p>
-                        <p className="text-lg font-medium text-foreground">{wineInfo.year}</p>
-                      </div>
-                      <div className="bg-accent/50 rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground mb-1">Tipo</p>
-                        <p className="text-lg font-medium text-foreground">{wineInfo.type}</p>
-                      </div>
-                    </div>
+                      
+                      {/* Wine Info */}
+                      <div className="flex-1 space-y-4">
+                        <div>
+                          <h2 className="text-2xl md:text-3xl font-serif font-bold text-foreground mb-2">{wineInfo.name}</h2>
+                          <p className="text-base text-muted-foreground mb-1">{wineInfo.winery}</p>
+                          <p className="text-sm text-muted-foreground">🌍 {wineInfo.region}</p>
+                        </div>
 
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">Descripción</h3>
-                      <p className="text-muted-foreground">{wineInfo.description}</p>
-                    </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-secondary rounded-xl p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Añada</p>
+                            <p className="text-xl font-bold text-foreground">{wineInfo.year}</p>
+                          </div>
+                          <div className="bg-secondary rounded-xl p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Tipo</p>
+                            <p className="text-xl font-bold text-foreground">{wineInfo.type}</p>
+                          </div>
+                        </div>
 
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-3">Maridajes sugeridos</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {wineInfo.pairings.map((pairing, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
-                          >
-                            {pairing}
-                          </span>
-                        ))}
+                        <div className="bg-accent/30 rounded-xl p-4">
+                          <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                            <Wine className="h-4 w-4" />
+                            Descripción
+                          </h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{wineInfo.description}</p>
+                        </div>
+
+                        <div>
+                          <h3 className="font-semibold text-foreground mb-3">Maridajes sugeridos</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {wineInfo.pairings.map((pairing, index) => (
+                              <span
+                                key={index}
+                                className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium"
+                              >
+                                {pairing}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
